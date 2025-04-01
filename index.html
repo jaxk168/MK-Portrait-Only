@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="kh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MK's Pong Duel Portrait Only</title>
+    <style>
+        @font-face {
+            font-family: 'Khmer OS Siemreap';
+            src: local('Khmer OS Siemreap'), 
+                 url('https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@main/hinted/ttf/NotoSansKhmer/NotoSansKhmer-Regular.ttf') format('truetype');
+            font-display: swap;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            font-family: 'Khmer OS Siemreap', 'Noto Sans Khmer', Arial, sans-serif;
+            overflow: hidden;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        #game-wrapper {
+            position: relative;
+            width: 95%;
+            height: 65vh;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            border: 2px solid purple;
+            overflow: hidden;
+        }
+        
+        #top-border, #bottom-border {
+            position: absolute;
+            width: 100%;
+            height: 10px;
+            background-color: purple;
+            left: 0;
+        }
+        
+        #top-border {
+            top: 0;
+        }
+        
+        #bottom-border {
+            bottom: 0;
+        }
+        
+        #paddle-left, #paddle-right {
+            position: absolute;
+            width: 15px;
+            height: 100px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        #paddle-left {
+            left: 25px;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+        }
+        
+        #paddle-right {
+            right: 25px;
+            background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+        }
+        
+        #ball {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #ff8a00, #e52e71);
+            box-shadow: 0 0 12px rgba(229, 46, 113, 0.7);
+        }
+        
+        .score {
+            position: absolute;
+            top: 20px;
+            font-size: 50px;
+            font-weight: bold;
+        }
+        
+        #left-score {
+            left: 30%;
+            color: blue;
+        }
+        
+        #right-score {
+            right: 30%;
+            color: red;
+        }
+        
+        #signature {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 30px;
+            font-weight: bold;
+            background: linear-gradient(to right, #ff8a00, #e52e71);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        #pause-btn {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            padding: 10px 20px;
+            font-size: 18px;
+            font-weight: 600;
+            background: linear-gradient(to right, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            box-shadow: 0 3px 6px rgba(106, 17, 203, 0.3);
+            z-index: 10;
+        }
+        
+        #game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 100;
+            text-align: center;
+        }
+        
+        #game-over-message {
+            font-size: 30px;
+            margin-bottom: 25px;
+            padding: 0 25px;
+        }
+        
+        #restart-btn {
+            padding: 15px 30px;
+            font-size: 20px;
+            background: linear-gradient(to right, #4CAF50, #2E8B57);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            box-shadow: 0 3px 6px rgba(76, 175, 80, 0.3);
+        }
+        
+        /* Mobile controls */
+        #controls-container {
+            display: flex;
+            justify-content: space-between;
+            width: 95%;
+            max-width: 500px;
+            margin-top: 20px;
+            touch-action: manipulation;
+        }
+        
+        .player-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 45%;
+        }
+        
+        .control-btn {
+            width: 100%;
+            height: 90px;
+            background: rgba(106, 17, 203, 0.7);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 35px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
+        }
+        
+        .control-btn:active {
+            background: rgba(37, 117, 252, 0.9);
+            transform: scale(0.98);
+        }
+        
+        /* Orientation lock */
+        @media screen and (orientation: landscape) {
+            body::before {
+                content: "សូមបង្វិលទូរស័ព្ទបញ្ឈរ ដើម្បីលេង🥰​ ផលិតដោយ:MK🐼";
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0,0,0,0.9);
+                color: white;
+                font-size: 24px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
+            }
+            
+            #game-wrapper, #controls-container {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-wrapper">
+        <div id="game-container">
+            <button id="pause-btn">សុំទ្រី😑</button>
+            <div id="top-border"></div>
+            <div id="bottom-border"></div>
+            <div id="paddle-left"></div>
+            <div id="paddle-right"></div>
+            <div id="ball"></div>
+            <div id="left-score" class="score">0</div>
+            <div id="right-score" class="score">0</div>
+            <div id="signature">MK</div>
+            
+            <div id="game-over">
+                <div id="game-over-message">💢ហ្គេមបានបញ្ចប់!នរណាបានពិន្ទុច្រើនជាង​អ្នកនោះឈ្នះ💢</div>
+                <button id="restart-btn">លេងម្ដងទៀត😽!</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Controls outside the game container -->
+    <div id="controls-container">
+        <div class="player-controls">
+            <button class="control-btn" id="left-up">↑</button>
+            <button class="control-btn" id="left-down">↓</button>
+        </div>
+        <div class="player-controls">
+            <button class="control-btn" id="right-up">↑</button>
+            <button class="control-btn" id="right-down">↓</button>
+        </div>
+    </div>
+
+    <script>
+        // Game elements
+        const gameContainer = document.getElementById('game-container');
+        const paddleLeft = document.getElementById('paddle-left');
+        const paddleRight = document.getElementById('paddle-right');
+        const ball = document.getElementById('ball');
+        const leftScoreDisplay = document.getElementById('left-score');
+        const rightScoreDisplay = document.getElementById('right-score');
+        const pauseBtn = document.getElementById('pause-btn');
+        const gameOverScreen = document.getElementById('game-over');
+        const restartBtn = document.getElementById('restart-btn');
+        
+        // Control buttons
+        const leftUpBtn = document.getElementById('left-up');
+        const leftDownBtn = document.getElementById('left-down');
+        const rightUpBtn = document.getElementById('right-up');
+        const rightDownBtn = document.getElementById('right-down');
+        
+        // Game variables
+        let GAME_WIDTH = gameContainer.clientWidth;
+        let GAME_HEIGHT = gameContainer.clientHeight;
+        const BALL_SIZE = 18;
+        const PADDLE_WIDTH = 15;
+        const PADDLE_HEIGHT = 100;
+        const BORDER_WIDTH = 10;
+        const PADDLE_OFFSET = 25;
+        
+        // Game settings
+        let leftPaddleY = (GAME_HEIGHT - PADDLE_HEIGHT) / 2;
+        let rightPaddleY = (GAME_HEIGHT - PADDLE_HEIGHT) / 2;
+        let ballX = GAME_WIDTH / 2;
+        let ballY = GAME_HEIGHT / 2;
+        const PADDLE_SPEED = 10;
+        const INITIAL_BALL_SPEED = 4;
+        const MAX_BALL_SPEED = 8;
+        const SPEED_INCREASE = 0.2;
+        let ballSpeedX = INITIAL_BALL_SPEED;
+        let ballSpeedY = INITIAL_BALL_SPEED;
+        let leftScore = 0;
+        let rightScore = 0;
+        let gameRunning = true;
+        let isPaused = false;
+        let animationId;
+        
+        // Control states
+        const controls = {
+            leftUp: false,
+            leftDown: false,
+            rightUp: false,
+            rightDown: false
+        };
+
+        // Lock orientation
+        function lockOrientation() {
+            if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('portrait').catch(() => {});
+            }
+        }
+        
+        function init() {
+            lockOrientation();
+            updateGameDimensions();
+            setupControls();
+            pauseBtn.addEventListener('click', togglePause);
+            restartBtn.addEventListener('click', restartGame);
+            window.addEventListener('resize', updateGameDimensions);
+            resetBall();
+            update();
+        }
+        
+        function updateGameDimensions() {
+            GAME_WIDTH = gameContainer.clientWidth;
+            GAME_HEIGHT = gameContainer.clientHeight;
+            
+            // Reset paddle positions
+            leftPaddleY = (GAME_HEIGHT - PADDLE_HEIGHT) / 2;
+            rightPaddleY = (GAME_HEIGHT - PADDLE_HEIGHT) / 2;
+            
+            updatePositions();
+        }
+        
+        function setupControls() {
+            // Setup button event listeners
+            function setupButton(button, control) {
+                const startEvents = ['touchstart', 'mousedown'];
+                const endEvents = ['touchend', 'touchcancel', 'mouseup', 'mouseleave'];
+                
+                startEvents.forEach(event => {
+                    button.addEventListener(event, (e) => {
+                        e.preventDefault();
+                        controls[control] = true;
+                    });
+                });
+                
+                endEvents.forEach(event => {
+                    button.addEventListener(event, (e) => {
+                        e.preventDefault();
+                        controls[control] = false;
+                    });
+                });
+            }
+            
+            setupButton(leftUpBtn, 'leftUp');
+            setupButton(leftDownBtn, 'leftDown');
+            setupButton(rightUpBtn, 'rightUp');
+            setupButton(rightDownBtn, 'rightDown');
+        }
+        
+        function updatePositions() {
+            paddleLeft.style.top = `${leftPaddleY}px`;
+            paddleRight.style.top = `${rightPaddleY}px`;
+            ball.style.left = `${ballX}px`;
+            ball.style.top = `${ballY}px`;
+        }
+        
+        function togglePause() {
+            isPaused = !isPaused;
+            pauseBtn.textContent = isPaused ? 'លេងត💢' : 'សុំទ្រី😑';
+            if (!isPaused && gameRunning) {
+                update();
+            }
+        }
+        
+        function resetBall() {
+            ballX = GAME_WIDTH / 2;
+            ballY = GAME_HEIGHT / 2;
+            ballSpeedX = Math.random() > 0.5 ? INITIAL_BALL_SPEED : -INITIAL_BALL_SPEED;
+            ballSpeedY = (Math.random() * 2 - 1) * INITIAL_BALL_SPEED;
+        }
+        
+        function showGameOver() {
+            gameRunning = false;
+            gameOverScreen.style.display = 'flex';
+        }
+        
+        function restartGame() {
+            leftScore = 0;
+            rightScore = 0;
+            leftScoreDisplay.textContent = '0';
+            rightScoreDisplay.textContent = '0';
+            gameOverScreen.style.display = 'none';
+            gameRunning = true;
+            isPaused = false;
+            pauseBtn.textContent = 'សុំទ្រី😑';
+            resetBall();
+            update();
+        }
+        
+        function update() {
+            if (!gameRunning || isPaused) return;
+            
+            // Move paddles based on active controls
+            if (controls.leftUp && leftPaddleY > BORDER_WIDTH) {
+                leftPaddleY -= PADDLE_SPEED;
+            }
+            if (controls.leftDown && leftPaddleY < GAME_HEIGHT - PADDLE_HEIGHT - BORDER_WIDTH) {
+                leftPaddleY += PADDLE_SPEED;
+            }
+            if (controls.rightUp && rightPaddleY > BORDER_WIDTH) {
+                rightPaddleY -= PADDLE_SPEED;
+            }
+            if (controls.rightDown && rightPaddleY < GAME_HEIGHT - PADDLE_HEIGHT - BORDER_WIDTH) {
+                rightPaddleY += PADDLE_SPEED;
+            }
+            
+            // Move ball
+            ballX += ballSpeedX;
+            ballY += ballSpeedY;
+            
+            // Ball collision with borders
+            if (ballY <= BORDER_WIDTH || ballY >= GAME_HEIGHT - BALL_SIZE - BORDER_WIDTH) {
+                ballSpeedY = -ballSpeedY;
+            }
+            
+            // Ball collision with paddles
+            if (ballX <= PADDLE_OFFSET + PADDLE_WIDTH && 
+                ballX >= PADDLE_OFFSET &&
+                ballY + BALL_SIZE >= leftPaddleY && 
+                ballY <= leftPaddleY + PADDLE_HEIGHT) {
+                // Calculate new speed without exceeding max
+                const newSpeedX = Math.min(Math.abs(ballSpeedX) + SPEED_INCREASE, MAX_BALL_SPEED);
+                ballSpeedX = newSpeedX;
+                const hitPosition = (ballY - leftPaddleY) / PADDLE_HEIGHT;
+                ballSpeedY = (hitPosition - 0.5) * 10;
+            }
+            
+            if (ballX + BALL_SIZE >= GAME_WIDTH - PADDLE_OFFSET - PADDLE_WIDTH && 
+                ballX <= GAME_WIDTH - PADDLE_OFFSET &&
+                ballY + BALL_SIZE >= rightPaddleY && 
+                ballY <= rightPaddleY + PADDLE_HEIGHT) {
+                // Calculate new speed without exceeding max
+                const newSpeedX = Math.min(Math.abs(ballSpeedX) + SPEED_INCREASE, MAX_BALL_SPEED);
+                ballSpeedX = -newSpeedX;
+                const hitPosition = (ballY - rightPaddleY) / PADDLE_HEIGHT;
+                ballSpeedY = (hitPosition - 0.5) * 10;
+            }
+            
+            // Scoring
+            if (ballX < 0) {
+                rightScore++;
+                rightScoreDisplay.textContent = rightScore;
+                if (rightScore >= 5) showGameOver();
+                else resetBall();
+            }
+            
+            if (ballX > GAME_WIDTH) {
+                leftScore++;
+                leftScoreDisplay.textContent = leftScore;
+                if (leftScore >= 5) showGameOver();
+                else resetBall();
+            }
+            
+            updatePositions();
+            animationId = requestAnimationFrame(update);
+        }
+        
+        // Start the game
+        init();
+    </script>
+</body>
+</html>
